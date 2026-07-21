@@ -375,7 +375,19 @@ export async function addAuditLog(entry: {
     .select("*")
     .single();
 
-  if (error || !data) throw new Error(error?.message ?? "Audit impossible");
+  if (error || !data) {
+    console.error("[audit]", error?.message ?? "Audit impossible");
+    return {
+      id: 0,
+      action: entry.action,
+      actor_id: entry.actorId,
+      actor_name: entry.actorName,
+      actor_role: entry.actorRole,
+      details: entry.details,
+      metadata: entry.metadata ?? null,
+      created_at: new Date().toISOString(),
+    } as AuditLog;
+  }
   return data as AuditLog;
 }
 

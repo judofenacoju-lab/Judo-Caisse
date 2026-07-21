@@ -43,7 +43,19 @@ export default function LoginForm({ onSuccess, formKey }: LoginFormProps) {
         body: JSON.stringify(payload),
       });
 
-      const data = await res.json();
+      const text = await res.text();
+      let data: { error?: string } = {};
+      try {
+        data = text ? (JSON.parse(text) as { error?: string }) : {};
+      } catch {
+        setError(
+          res.ok
+            ? "Réponse serveur invalide"
+            : `Erreur serveur (${res.status}). Vérifiez les variables Supabase sur Vercel.`
+        );
+        return;
+      }
+
       if (!res.ok) {
         setError(data.error ?? "Erreur de connexion");
         return;

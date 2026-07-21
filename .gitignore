@@ -4,7 +4,9 @@ out/
 data/
 data/uploads/
 .env
+.env.local
 .env*.local
+.vercel
 .DS_Store
 *.pem
 npm-debug.log*
