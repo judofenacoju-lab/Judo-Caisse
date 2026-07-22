@@ -153,8 +153,9 @@ export default function TransactionList({
                     <button
                       onClick={() => handleDelete(tx.id)}
                       disabled={deletingId === tx.id}
-                      className="p-2 text-muted hover:text-accent hover:bg-red-50 rounded-lg opacity-0 group-hover:opacity-100 transition-all disabled:opacity-50"
+                      className="flex-shrink-0 p-2 text-muted hover:text-accent hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50"
                       title="Supprimer"
+                      aria-label="Supprimer"
                     >
                       <Trash2 className="w-4 h-4" />
                     </button>

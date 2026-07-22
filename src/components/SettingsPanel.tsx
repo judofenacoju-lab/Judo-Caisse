@@ -648,18 +648,22 @@ function CategoryGroup({
                 </>
               ) : (
                 <>
-                  <span className="flex-1 text-sm font-medium">{cat.name}</span>
+                  <span className="flex-1 min-w-0 text-sm font-medium truncate">
+                    {cat.name}
+                  </span>
                   <button
                     onClick={() => onStartEdit(cat)}
-                    className="p-1.5 text-muted hover:text-primary hover:bg-white rounded-lg opacity-0 group-hover:opacity-100 transition-all"
+                    className="flex-shrink-0 p-2 text-muted hover:text-primary hover:bg-white rounded-lg transition-colors"
                     title="Renommer"
+                    aria-label="Renommer"
                   >
                     <Pencil className="w-4 h-4" />
                   </button>
                   <button
                     onClick={() => onDelete(cat.id)}
-                    className="p-1.5 text-muted hover:text-accent hover:bg-white rounded-lg opacity-0 group-hover:opacity-100 transition-all"
+                    className="flex-shrink-0 p-2 text-muted hover:text-accent hover:bg-white rounded-lg transition-colors"
                     title="Supprimer"
+                    aria-label="Supprimer"
                   >
                     <Trash2 className="w-4 h-4" />
                   </button>
