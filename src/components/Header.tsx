@@ -16,11 +16,8 @@ function headerStyles(role: UserRole, elegant: boolean): string {
   if (elegant) {
     return "bg-[linear-gradient(120deg,#7a0000_0%,#b40000_55%,#fb0101_100%)] text-white border-transparent shadow-[0_12px_30px_-18px_rgba(120,0,0,0.7)]";
   }
-  if (role === "financiere") {
+  if (role === "financiere" || role === "coordon") {
     return "bg-gradient-to-br from-primary to-primary-light text-white border-transparent";
-  }
-  if (role === "coordon") {
-    return "bg-gradient-to-br from-red-700 to-accent text-white border-transparent";
   }
   return "bg-gradient-to-br from-slate-800 to-slate-600 text-white border-transparent";
 }
