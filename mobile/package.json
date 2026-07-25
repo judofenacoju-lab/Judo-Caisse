@@ -1,0 +1,20 @@
+{
+  "name": "judo-caisse-mobile",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Application Android Judo Caisse (liée à https://judo-caisse.vercel.app)",
+  "scripts": {
+    "cap:sync": "npx cap sync android",
+    "cap:open": "npx cap open android",
+    "android:add": "npx cap add android",
+    "android:apk": "cd android && .\\gradlew.bat assembleDebug"
+  },
+  "dependencies": {
+    "@capacitor/android": "^7.4.3",
+    "@capacitor/app": "^7.1.0",
+    "@capacitor/cli": "^7.4.3",
+    "@capacitor/core": "^7.4.3",
+    "@capacitor/splash-screen": "^7.0.3",
+    "@capacitor/status-bar": "^7.0.3"
+  }
+}

@@ -1,0 +1,25 @@
+{
+  "appId": "com.judofenacoju.caisse",
+  "appName": "Judo Caisse",
+  "webDir": "www",
+  "server": {
+    "url": "https://judo-caisse.vercel.app",
+    "cleartext": false,
+    "allowNavigation": ["judo-caisse.vercel.app", "*.supabase.co"]
+  },
+  "android": {
+    "allowMixedContent": false,
+    "backgroundColor": "#1e3a5f"
+  },
+  "plugins": {
+    "SplashScreen": {
+      "launchShowDuration": 1500,
+      "backgroundColor": "#1e3a5f",
+      "showSpinner": false
+    },
+    "StatusBar": {
+      "style": "DARK",
+      "backgroundColor": "#1e3a5f"
+    }
+  }
+}

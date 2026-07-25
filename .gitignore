@@ -10,3 +10,9 @@ data/uploads/
 .DS_Store
 *.pem
 npm-debug.log*
+mobile/node_modules/
+mobile/android/.gradle/
+mobile/android/app/build/
+mobile/android/build/
+mobile/android/local.properties
+mobile/android/capacitor-cordova-android-plugins/build/
