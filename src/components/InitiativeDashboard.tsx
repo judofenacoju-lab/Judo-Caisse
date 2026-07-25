@@ -188,10 +188,10 @@ export default function InitiativeDashboard({
                   <p className="text-[11px] uppercase tracking-[0.28em] text-white/70 font-medium">
                     Solde actuel
                   </p>
-                  <p className="mt-3 text-4xl sm:text-5xl font-bold tracking-tight text-black">
+                  <p className="mt-3 text-4xl sm:text-5xl font-bold tracking-tight text-white">
                     {formatCurrency(stats.usd.solde, "USD")}
                   </p>
-                  <p className="mt-2 text-xl font-bold text-black">
+                  <p className="mt-2 text-xl font-bold text-white">
                     {formatCurrency(stats.fc.solde, "FC")}
                   </p>
                   {onOpenRecap && (
