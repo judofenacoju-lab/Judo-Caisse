@@ -188,7 +188,7 @@ export default function TransactionForm({
                 }}
                 className={`py-3 px-4 rounded-xl font-medium transition-all ${
                   type === "entree"
-                    ? "bg-green-100 text-success border-2 border-success"
+                    ? "bg-green-600 text-white border-2 border-green-600"
                     : "bg-slate-50 text-muted border-2 border-transparent hover:border-border"
                 }`}
               >
@@ -365,11 +365,7 @@ export default function TransactionForm({
               disabled={
                 loading || (type === "sortie" && justifications.length === 0)
               }
-              className={`w-full py-3 px-4 font-semibold rounded-xl text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
-                type === "entree"
-                  ? "bg-success hover:bg-green-700"
-                  : "bg-accent hover:bg-red-700"
-              }`}
+              className="w-full py-3 px-4 font-semibold rounded-xl text-white bg-green-600 hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {loading
                 ? "Enregistrement..."

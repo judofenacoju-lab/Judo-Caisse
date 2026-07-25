@@ -86,17 +86,17 @@ export default function InitiativeDashboard({
       <div className="px-4 sm:px-6 pt-5 pb-2">
         <div className="max-w-6xl mx-auto initiative-island flex items-center justify-between gap-3 px-4 py-3">
           <div className="min-w-0">
-            <p className="text-[10px] uppercase tracking-[0.22em] text-red-900/55 font-semibold">
+            <p className="text-[10px] uppercase tracking-[0.22em] text-gray-500 font-medium">
               Caisse
             </p>
-            <h1 className="text-lg sm:text-xl font-semibold tracking-tight text-red-950 truncate">
+            <h1 className="text-lg sm:text-xl font-bold tracking-tight text-black truncate">
               Initiative-Judo
             </h1>
           </div>
           <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
             <div className="hidden md:block text-right mr-2">
-              <p className="text-sm font-medium text-red-950">{user.name}</p>
-              <p className="text-xs text-red-900/55">{roleLabel(user.role)}</p>
+              <p className="text-sm font-bold text-black">{user.name}</p>
+              <p className="text-xs text-gray-500">{roleLabel(user.role)}</p>
             </div>
             {onChangeWorkspace && (
               <button
@@ -133,7 +133,7 @@ export default function InitiativeDashboard({
           {/* Left rail — vertical metrics (desktop) */}
           <aside className="hidden lg:flex flex-col gap-4 initiative-rise">
             <div className="initiative-rail p-5">
-              <p className="text-[10px] uppercase tracking-[0.2em] text-red-900/50 font-semibold mb-4">
+              <p className="text-[10px] uppercase tracking-[0.2em] text-gray-500 font-medium mb-4">
                 Synthèse
               </p>
               {stats && (
@@ -183,15 +183,15 @@ export default function InitiativeDashboard({
           <div className="space-y-6 min-w-0">
             {/* Diagonal hero — not a rounded card grid */}
             {stats && (
-              <section className="initiative-rise initiative-hero-slab text-white relative overflow-hidden">
+              <section className="initiative-rise initiative-hero-slab relative overflow-hidden">
                 <div className="relative z-10 p-6 sm:p-8 pr-10 sm:pr-16">
-                  <p className="text-[11px] uppercase tracking-[0.28em] text-white/55 font-semibold">
+                  <p className="text-[11px] uppercase tracking-[0.28em] text-white/70 font-medium">
                     Solde actuel
                   </p>
-                  <p className="mt-3 text-4xl sm:text-5xl font-semibold tracking-tight">
+                  <p className="mt-3 text-4xl sm:text-5xl font-bold tracking-tight text-black">
                     {formatCurrency(stats.usd.solde, "USD")}
                   </p>
-                  <p className="mt-2 text-xl text-white/80 font-medium">
+                  <p className="mt-2 text-xl font-bold text-black">
                     {formatCurrency(stats.fc.solde, "FC")}
                   </p>
                   {onOpenRecap && (
@@ -235,10 +235,10 @@ export default function InitiativeDashboard({
             <section className="initiative-rise-delay">
               <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-5">
                 <div>
-                  <p className="text-[10px] uppercase tracking-[0.22em] text-red-900/50 font-semibold">
+                  <p className="text-[10px] uppercase tracking-[0.22em] text-gray-500 font-medium">
                     Mouvements
                   </p>
-                  <h2 className="text-2xl font-semibold tracking-tight text-red-950 mt-1">
+                  <h2 className="text-2xl font-bold tracking-tight text-black mt-1">
                     Historique
                   </h2>
                 </div>
@@ -293,11 +293,11 @@ export default function InitiativeDashboard({
                               ) : (
                                 <ArrowUpRight className="w-4 h-4 text-orange-700 flex-shrink-0" />
                               )}
-                              <p className="font-semibold text-red-950 truncate">
+                              <p className="font-bold text-black truncate">
                                 {tx.description}
                               </p>
                             </div>
-                            <p className="text-xs sm:text-sm text-red-900/60">
+                            <p className="text-xs sm:text-sm text-gray-500">
                               {formatDate(tx.date)}
                               {tx.category_name ? ` · ${tx.category_name}` : ""}
                               {tx.created_by_name
@@ -330,13 +330,7 @@ export default function InitiativeDashboard({
                             )}
                           </div>
                           <div className="flex items-center gap-2 flex-shrink-0">
-                            <p
-                              className={`text-base sm:text-lg font-semibold whitespace-nowrap ${
-                                tx.type === "entree"
-                                  ? "text-[#c40000]"
-                                  : "text-orange-700"
-                              }`}
-                            >
+                            <p className="text-base sm:text-lg font-bold whitespace-nowrap text-black">
                               {tx.type === "entree" ? "+" : "−"}
                               {formatCurrency(tx.amount, tx.currency ?? "USD")}
                             </p>
@@ -409,24 +403,17 @@ export default function InitiativeDashboard({
 function RailMetric({
   label,
   value,
-  tone,
 }: {
   label: string;
   value: string;
   tone: "in" | "out" | "neutral";
 }) {
-  const color =
-    tone === "in"
-      ? "text-[#c40000]"
-      : tone === "out"
-        ? "text-orange-700"
-        : "text-red-950";
   return (
     <div>
-      <p className="text-[10px] uppercase tracking-[0.16em] text-red-800/50 font-semibold">
+      <p className="text-[10px] uppercase tracking-[0.16em] text-gray-500 font-medium">
         {label}
       </p>
-      <p className={`mt-1 text-lg font-semibold ${color}`}>{value}</p>
+      <p className="mt-1 text-lg font-bold text-black">{value}</p>
     </div>
   );
 }
@@ -435,7 +422,6 @@ function MetricChip({
   label,
   primary,
   secondary,
-  tone,
 }: {
   label: string;
   primary: string;
@@ -444,21 +430,15 @@ function MetricChip({
 }) {
   return (
     <div
-      className={`flex-shrink-0 min-w-[140px] px-4 py-3 border ${
-        tone === "in"
-          ? "border-[#fb0101]/40 bg-red-50/90"
-          : tone === "out"
-            ? "border-orange-700/25 bg-orange-50/80"
-            : "border-red-900/15 bg-white/70"
-      }`}
+      className="flex-shrink-0 min-w-[140px] px-4 py-3 border border-gray-200 bg-white/80"
       style={{ clipPath: "polygon(0 0, 100% 0, 100% 78%, 88% 100%, 0 100%)" }}
     >
-      <p className="text-[10px] uppercase tracking-[0.16em] text-red-900/50 font-semibold">
+      <p className="text-[10px] uppercase tracking-[0.16em] text-gray-500 font-medium">
         {label}
       </p>
-      <p className="mt-1 font-semibold text-red-950">{primary}</p>
+      <p className="mt-1 font-bold text-black">{primary}</p>
       {secondary && (
-        <p className="text-xs text-red-900/60 mt-0.5">{secondary}</p>
+        <p className="text-xs font-bold text-black mt-0.5">{secondary}</p>
       )}
     </div>
   );
