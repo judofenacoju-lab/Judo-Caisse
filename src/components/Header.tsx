@@ -14,7 +14,7 @@ interface HeaderProps {
 
 function headerStyles(role: UserRole, elegant: boolean): string {
   if (elegant) {
-    return "bg-[linear-gradient(120deg,#0b3f3b_0%,#0f5c56_55%,#14665f_100%)] text-white border-transparent shadow-[0_12px_30px_-18px_rgba(11,63,59,0.7)]";
+    return "bg-[linear-gradient(120deg,#7a0000_0%,#b40000_55%,#fb0101_100%)] text-white border-transparent shadow-[0_12px_30px_-18px_rgba(120,0,0,0.7)]";
   }
   if (role === "financiere") {
     return "bg-gradient-to-br from-primary to-primary-light text-white border-transparent";

@@ -162,7 +162,7 @@ export default function TransactionForm({
       <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
         <div
           className={`bg-card w-full max-w-lg shadow-2xl animate-fade-in max-h-[90vh] overflow-y-auto ${
-            elegant ? "rounded-[1.4rem] border border-teal-900/10" : "rounded-2xl"
+            elegant ? "rounded-[1.4rem] border border-red-900/10" : "rounded-2xl"
           }`}
         >
           <div className="flex items-center justify-between p-6 border-b border-border">

@@ -55,8 +55,8 @@ export default function StatsCards({
               label: "Entrées",
               usd: usd.entrees,
               fc: fc.entrees,
-              tone: "text-teal-700",
-              iconBg: "bg-teal-100",
+              tone: "text-[#c40000]",
+              iconBg: "bg-red-100",
               Icon: ArrowDownLeft,
             },
             {

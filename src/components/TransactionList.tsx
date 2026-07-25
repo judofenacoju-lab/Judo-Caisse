@@ -63,7 +63,7 @@ export default function TransactionList({
           : "bg-card rounded-2xl border border-border shadow-sm"
       }`}
     >
-      <div className={`p-6 border-b ${elegant ? "border-teal-900/10" : "border-border"}`}>
+      <div className={`p-6 border-b ${elegant ? "border-red-900/10" : "border-border"}`}>
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <h2
             className={`text-lg font-bold ${
