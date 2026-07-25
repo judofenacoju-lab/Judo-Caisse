@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { canManageUsers, clearAuditLogs, getAuditLogs } from "@/lib/db";
-import { getSession } from "@/lib/auth";
+import { getSession, sessionHasWorkspace } from "@/lib/auth";
 
 export async function GET() {
   const session = await getSession();
@@ -10,8 +10,14 @@ export async function GET() {
   if (!canManageUsers(session.role)) {
     return NextResponse.json({ error: "Accès refusé" }, { status: 403 });
   }
+  if (!sessionHasWorkspace(session)) {
+    return NextResponse.json(
+      { error: "Sélectionnez un tableau de bord" },
+      { status: 403 }
+    );
+  }
 
-  const logs = await getAuditLogs(300);
+  const logs = await getAuditLogs(session.workspace, 300);
   return NextResponse.json({ logs });
 }
 
@@ -23,13 +29,22 @@ export async function DELETE() {
   if (!canManageUsers(session.role)) {
     return NextResponse.json({ error: "Accès refusé" }, { status: 403 });
   }
+  if (!sessionHasWorkspace(session)) {
+    return NextResponse.json(
+      { error: "Sélectionnez un tableau de bord" },
+      { status: 403 }
+    );
+  }
 
-  await clearAuditLogs({
-    id: session.userId,
-    name: session.name,
-    role: session.role,
-  });
+  await clearAuditLogs(
+    {
+      id: session.userId,
+      name: session.name,
+      role: session.role,
+    },
+    session.workspace
+  );
 
-  const logs = await getAuditLogs(300);
+  const logs = await getAuditLogs(session.workspace, 300);
   return NextResponse.json({ ok: true, logs });
 }

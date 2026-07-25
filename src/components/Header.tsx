@@ -1,13 +1,15 @@
 "use client";
 
-import { LogOut, Settings } from "lucide-react";
+import { LayoutDashboard, LogOut, Settings } from "lucide-react";
 import type { Session, UserRole } from "@/lib/db";
 import { roleLabel } from "@/lib/utils";
+import { workspaceLabel } from "@/lib/workspace";
 
 interface HeaderProps {
   user: Session;
   onLogout: () => void;
   onOpenSettings: () => void;
+  onChangeWorkspace?: () => void;
 }
 
 function headerStyles(role: UserRole): string {
@@ -20,34 +22,61 @@ function headerStyles(role: UserRole): string {
   return "bg-gradient-to-br from-slate-800 to-slate-600 text-white border-transparent";
 }
 
-export default function Header({ user, onLogout, onOpenSettings }: HeaderProps) {
+export default function Header({
+  user,
+  onLogout,
+  onOpenSettings,
+  onChangeWorkspace,
+}: HeaderProps) {
   async function handleLogout() {
     await fetch("/api/auth", { method: "DELETE" });
     onLogout();
   }
 
-  const isColored = user.role === "financiere" || user.role === "coordon" || user.role === "admin";
+  const isColored =
+    user.role === "financiere" ||
+    user.role === "coordon" ||
+    user.role === "admin";
 
   return (
     <header className={`sticky top-0 z-30 border-b ${headerStyles(user.role)}`}>
       <div className="max-w-6xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <span className="text-2xl">🥋</span>
-          <div>
-            <h1 className="text-xl font-bold">Judo Caisse</h1>
-            <p className={`text-xs hidden sm:block ${isColored ? "text-white/80" : "text-muted"}`}>
-              Gestion quotidienne de la caisse
+        <div className="flex items-center gap-3 min-w-0">
+          <span className="text-2xl flex-shrink-0">🥋</span>
+          <div className="min-w-0">
+            <h1 className="text-xl font-bold truncate">Judo Caisse</h1>
+            <p
+              className={`text-xs truncate ${
+                isColored ? "text-white/80" : "text-muted"
+              }`}
+            >
+              {user.workspace
+                ? workspaceLabel(user.workspace)
+                : "Gestion quotidienne de la caisse"}
             </p>
           </div>
         </div>
 
-        <div className="flex items-center gap-2 sm:gap-4">
+        <div className="flex items-center gap-1 sm:gap-3 flex-shrink-0">
           <div className="text-right hidden sm:block">
             <p className="text-sm font-medium">{user.name}</p>
             <p className={`text-xs ${isColored ? "text-white/80" : "text-muted"}`}>
               {roleLabel(user.role)}
             </p>
           </div>
+          {onChangeWorkspace && (
+            <button
+              onClick={onChangeWorkspace}
+              className={`p-2 rounded-lg transition-colors ${
+                isColored
+                  ? "text-white/90 hover:bg-white/15"
+                  : "text-muted hover:text-primary hover:bg-blue-50"
+              }`}
+              title="Changer de tableau de bord"
+            >
+              <LayoutDashboard className="w-5 h-5" />
+            </button>
+          )}
           <button
             onClick={onOpenSettings}
             className={`p-2 rounded-lg transition-colors ${

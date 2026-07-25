@@ -17,14 +17,20 @@ Application web de gestion de caisse pour le club de judo (Financière, Coordon,
 | Coordon | `5678` |
 | Admin | `1122` |
 
-## Configuration Supabase
+## Tableaux de bord
 
-1. Créez un projet sur [supabase.com](https://supabase.com)
-2. Ouvrez **SQL Editor** et exécutez le fichier `supabase/schema.sql`
-3. Dans **Storage**, vérifiez que le bucket `justifications` existe (créé par le SQL)
-4. Dans **Project Settings → API**, copiez :
-   - Project URL
-   - `service_role` key (secret)
+- **Judo-Vacances** : partagé entre Financière et Coordon (Admin en lecture)
+- **Initiative Judo** : accessible uniquement à Admin et Financière
+
+Après connexion (Admin / Financière), un modal permet de choisir le tableau de bord.
+Le Coordon ouvre directement **Judo-Vacances**.
+
+Les données (opérations, catégories, exports, audit) sont séparées par tableau de bord.
+
+## Migration base existante
+
+Si le projet Supabase existe déjà, exécutez aussi `supabase/migration_workspaces.sql`.
+
 
 ## Variables d'environnement
 

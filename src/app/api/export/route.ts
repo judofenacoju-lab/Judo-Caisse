@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { addAuditLog, getExportData } from "@/lib/db";
-import { getSession } from "@/lib/auth";
+import { getSession, sessionHasWorkspace } from "@/lib/auth";
 import { generateExcelBuffer, generatePdfBuffer } from "@/lib/export";
 
 export async function GET(request: NextRequest) {
@@ -8,10 +8,17 @@ export async function GET(request: NextRequest) {
   if (!session) {
     return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
   }
+  if (!sessionHasWorkspace(session)) {
+    return NextResponse.json(
+      { error: "Sélectionnez un tableau de bord" },
+      { status: 403 }
+    );
+  }
 
   const format = new URL(request.url).searchParams.get("format");
-  const { stats, transactions } = await getExportData();
+  const { stats, transactions } = await getExportData(session.workspace);
   const dateStamp = new Date().toISOString().slice(0, 10);
+  const slug = session.workspace.replace(/_/g, "-");
 
   if (format === "xlsx" || format === "pdf") {
     await addAuditLog({
@@ -19,6 +26,7 @@ export async function GET(request: NextRequest) {
       actorId: session.userId,
       actorName: session.name,
       actorRole: session.role,
+      workspace: session.workspace,
       details: `Export du rapport caisse au format ${format.toUpperCase()}`,
       metadata: { format },
     });
@@ -30,7 +38,7 @@ export async function GET(request: NextRequest) {
       headers: {
         "Content-Type":
           "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-        "Content-Disposition": `attachment; filename="judo-caisse-${dateStamp}.xlsx"`,
+        "Content-Disposition": `attachment; filename="judo-caisse-${slug}-${dateStamp}.xlsx"`,
       },
     });
   }
@@ -40,7 +48,7 @@ export async function GET(request: NextRequest) {
     return new NextResponse(new Uint8Array(buffer), {
       headers: {
         "Content-Type": "application/pdf",
-        "Content-Disposition": `attachment; filename="judo-caisse-${dateStamp}.pdf"`,
+        "Content-Disposition": `attachment; filename="judo-caisse-${slug}-${dateStamp}.pdf"`,
       },
     });
   }

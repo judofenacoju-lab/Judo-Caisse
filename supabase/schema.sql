@@ -13,6 +13,8 @@ create table if not exists categories (
   id bigint generated always as identity primary key,
   name text not null,
   type text not null check (type in ('entree', 'sortie')),
+  workspace text not null default 'judo_vacances'
+    check (workspace in ('judo_vacances', 'initiative_judo')),
   created_at timestamptz not null default now()
 );
 
@@ -26,6 +28,8 @@ create table if not exists transactions (
   created_by bigint not null references users(id),
   date date not null,
   justification_files text[] not null default '{}',
+  workspace text not null default 'judo_vacances'
+    check (workspace in ('judo_vacances', 'initiative_judo')),
   created_at timestamptz not null default now()
 );
 
@@ -37,12 +41,17 @@ create table if not exists audit_logs (
   actor_role text not null,
   details text not null,
   metadata jsonb,
+  workspace text
+    check (workspace is null or workspace in ('judo_vacances', 'initiative_judo')),
   created_at timestamptz not null default now()
 );
 
 create index if not exists idx_transactions_date on transactions(date desc);
 create index if not exists idx_transactions_type on transactions(type);
+create index if not exists idx_transactions_workspace on transactions(workspace);
+create index if not exists idx_categories_workspace on categories(workspace);
 create index if not exists idx_audit_logs_created on audit_logs(created_at desc);
+create index if not exists idx_audit_logs_workspace on audit_logs(workspace);
 
 insert into users (name, role, pin)
 select * from (values
@@ -52,8 +61,9 @@ select * from (values
 ) as v(name, role, pin)
 where not exists (select 1 from users);
 
-insert into categories (name, type)
-select * from (values
+insert into categories (name, type, workspace)
+select v.name, v.type, w.workspace
+from (values
   ('Cotisations', 'entree'),
   ('Subventions', 'entree'),
   ('Événements / Galas', 'entree'),
@@ -66,7 +76,11 @@ select * from (values
   ('Frais bancaires', 'sortie'),
   ('Divers', 'sortie')
 ) as v(name, type)
-where not exists (select 1 from categories);
+cross join (values ('judo_vacances'), ('initiative_judo')) as w(workspace)
+where not exists (
+  select 1 from categories c
+  where c.name = v.name and c.type = v.type and c.workspace = w.workspace
+);
 
 insert into storage.buckets (id, name, public)
 values ('justifications', 'justifications', false)

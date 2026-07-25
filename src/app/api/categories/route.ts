@@ -7,18 +7,24 @@ import {
   updateCategory,
   type TransactionType,
 } from "@/lib/db";
-import { getSession } from "@/lib/auth";
+import { getSession, sessionHasWorkspace } from "@/lib/auth";
 
 export async function GET(request: NextRequest) {
   const session = await getSession();
   if (!session) {
     return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
   }
+  if (!sessionHasWorkspace(session)) {
+    return NextResponse.json(
+      { error: "Sélectionnez un tableau de bord" },
+      { status: 403 }
+    );
+  }
 
   const { searchParams } = new URL(request.url);
   const type = searchParams.get("type") as TransactionType | null;
 
-  const categories = await getCategories(type ?? undefined);
+  const categories = await getCategories(session.workspace, type ?? undefined);
   return NextResponse.json({ categories });
 }
 
@@ -26,6 +32,12 @@ export async function POST(request: NextRequest) {
   const session = await getSession();
   if (!session) {
     return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
+  }
+  if (!sessionHasWorkspace(session)) {
+    return NextResponse.json(
+      { error: "Sélectionnez un tableau de bord" },
+      { status: 403 }
+    );
   }
 
   const body = await request.json();
@@ -36,12 +48,13 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const category = await createCategory(name, type);
+    const category = await createCategory(name, type, session.workspace);
     await addAuditLog({
       action: "category_create",
       actorId: session.userId,
       actorName: session.name,
       actorRole: session.role,
+      workspace: session.workspace,
       details: `Création de la catégorie « ${category.name} » (${type === "entree" ? "entrée" : "sortie"})`,
       metadata: { categoryId: category.id, type },
     });
@@ -59,6 +72,12 @@ export async function PUT(request: NextRequest) {
   if (!session) {
     return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
   }
+  if (!sessionHasWorkspace(session)) {
+    return NextResponse.json(
+      { error: "Sélectionnez un tableau de bord" },
+      { status: 403 }
+    );
+  }
 
   const body = await request.json();
   const { id, name } = body as { id?: number; name?: string };
@@ -68,9 +87,9 @@ export async function PUT(request: NextRequest) {
   }
 
   try {
-    const categories = await getCategories();
+    const categories = await getCategories(session.workspace);
     const before = categories.find((c) => c.id === id);
-    const category = await updateCategory(id, name);
+    const category = await updateCategory(id, name, session.workspace);
     if (!category) {
       return NextResponse.json({ error: "Catégorie introuvable" }, { status: 404 });
     }
@@ -79,6 +98,7 @@ export async function PUT(request: NextRequest) {
       actorId: session.userId,
       actorName: session.name,
       actorRole: session.role,
+      workspace: session.workspace,
       details: `Renommage de la catégorie « ${before?.name ?? "?"} » → « ${category.name} »`,
       metadata: { categoryId: category.id },
     });
@@ -96,15 +116,21 @@ export async function DELETE(request: NextRequest) {
   if (!session) {
     return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
   }
+  if (!sessionHasWorkspace(session)) {
+    return NextResponse.json(
+      { error: "Sélectionnez un tableau de bord" },
+      { status: 403 }
+    );
+  }
 
   const id = parseInt(new URL(request.url).searchParams.get("id") ?? "", 10);
   if (!id) {
     return NextResponse.json({ error: "ID requis" }, { status: 400 });
   }
 
-  const categories = await getCategories();
+  const categories = await getCategories(session.workspace);
   const before = categories.find((c) => c.id === id);
-  const result = await deleteCategory(id);
+  const result = await deleteCategory(id, session.workspace);
   if (!result.ok) {
     return NextResponse.json({ error: result.error }, { status: 400 });
   }
@@ -114,6 +140,7 @@ export async function DELETE(request: NextRequest) {
     actorId: session.userId,
     actorName: session.name,
     actorRole: session.role,
+    workspace: session.workspace,
     details: `Suppression de la catégorie « ${before?.name ?? `#${id}`} »`,
     metadata: { categoryId: id },
   });

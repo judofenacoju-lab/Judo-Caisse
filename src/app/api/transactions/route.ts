@@ -10,7 +10,7 @@ import {
   type TransactionType,
 } from "@/lib/db";
 import { formatCurrency } from "@/lib/utils";
-import { getSession } from "@/lib/auth";
+import { getSession, sessionHasWorkspace } from "@/lib/auth";
 import {
   deleteJustificationFiles,
   saveJustificationFile,
@@ -21,13 +21,16 @@ function unauthorized() {
   return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
 }
 
-function forbidden() {
-  return NextResponse.json({ error: "Accès refusé" }, { status: 403 });
+function forbidden(message = "Accès refusé") {
+  return NextResponse.json({ error: message }, { status: 403 });
 }
 
 export async function GET(request: NextRequest) {
   const session = await getSession();
   if (!session) return unauthorized();
+  if (!sessionHasWorkspace(session)) {
+    return forbidden("Sélectionnez un tableau de bord");
+  }
 
   const { searchParams } = new URL(request.url);
   const type = searchParams.get("type") as TransactionType | null;
@@ -36,11 +39,12 @@ export async function GET(request: NextRequest) {
 
   const [transactions, total] = await Promise.all([
     getTransactions({
+      workspace: session.workspace,
       type: type ?? undefined,
       limit,
       offset,
     }),
-    getTransactionCount(type ?? undefined),
+    getTransactionCount(session.workspace, type ?? undefined),
   ]);
 
   return NextResponse.json({ transactions, total });
@@ -49,6 +53,9 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   const session = await getSession();
   if (!session) return unauthorized();
+  if (!sessionHasWorkspace(session)) {
+    return forbidden("Sélectionnez un tableau de bord");
+  }
   if (!canCreateTransactions(session.role)) {
     return forbidden();
   }
@@ -120,6 +127,7 @@ export async function POST(request: NextRequest) {
       categoryId,
       createdBy: session.userId,
       date,
+      workspace: session.workspace,
       justificationFiles: savedFilenames,
     });
 
@@ -128,6 +136,7 @@ export async function POST(request: NextRequest) {
       actorId: session.userId,
       actorName: session.name,
       actorRole: session.role,
+      workspace: session.workspace,
       details: `Création d'une ${type === "entree" ? "entrée" : "sortie"} : « ${transaction.description} » — ${formatCurrency(amount, currency)}`,
       metadata: {
         transactionId: transaction.id,
@@ -140,15 +149,20 @@ export async function POST(request: NextRequest) {
     });
 
     return NextResponse.json({ transaction }, { status: 201 });
-  } catch {
+  } catch (err) {
     await deleteJustificationFiles(savedFilenames);
-    return NextResponse.json({ error: "Erreur lors de la création" }, { status: 500 });
+    const message =
+      err instanceof Error ? err.message : "Erreur lors de la création";
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }
 
 export async function DELETE(request: NextRequest) {
   const session = await getSession();
   if (!session) return unauthorized();
+  if (!sessionHasWorkspace(session)) {
+    return forbidden("Sélectionnez un tableau de bord");
+  }
   if (!canCreateTransactions(session.role)) {
     return forbidden();
   }
@@ -160,7 +174,7 @@ export async function DELETE(request: NextRequest) {
     return NextResponse.json({ error: "ID requis" }, { status: 400 });
   }
 
-  const deleted = await deleteTransaction(id);
+  const deleted = await deleteTransaction(id, session.workspace);
   if (!deleted) {
     return NextResponse.json({ error: "Transaction introuvable" }, { status: 404 });
   }
@@ -170,6 +184,7 @@ export async function DELETE(request: NextRequest) {
     actorId: session.userId,
     actorName: session.name,
     actorRole: session.role,
+    workspace: session.workspace,
     details: `Suppression d'une ${deleted.type === "entree" ? "entrée" : "sortie"} : « ${deleted.description} » — ${formatCurrency(deleted.amount, deleted.currency ?? "USD")}`,
     metadata: {
       transactionId: deleted.id,

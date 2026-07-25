@@ -15,6 +15,7 @@ interface DashboardProps {
   user: Session;
   onLogout: () => void;
   onUserUpdate: (user: Session) => void;
+  onChangeWorkspace?: () => void;
 }
 
 interface Stats {
@@ -25,7 +26,12 @@ interface Stats {
 
 const POLL_INTERVAL_MS = 3000;
 
-export default function Dashboard({ user, onLogout, onUserUpdate }: DashboardProps) {
+export default function Dashboard({
+  user,
+  onLogout,
+  onUserUpdate,
+  onChangeWorkspace,
+}: DashboardProps) {
   const [currentUser, setCurrentUser] = useState(user);
   const [stats, setStats] = useState<Stats | null>(null);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
@@ -37,6 +43,12 @@ export default function Dashboard({ user, onLogout, onUserUpdate }: DashboardPro
   useEffect(() => {
     setCurrentUser(user);
   }, [user]);
+
+  useEffect(() => {
+    setLoading(true);
+    setStats(null);
+    setTransactions([]);
+  }, [user.workspace]);
 
   useEffect(() => {
     isMounted.current = true;
@@ -86,7 +98,7 @@ export default function Dashboard({ user, onLogout, onUserUpdate }: DashboardPro
     refresh(false);
     const interval = setInterval(() => refresh(true), POLL_INTERVAL_MS);
     return () => clearInterval(interval);
-  }, [refresh]);
+  }, [refresh, user.workspace]);
 
   const isReadOnly = !canCreateTransactions(currentUser.role);
 
@@ -107,6 +119,7 @@ export default function Dashboard({ user, onLogout, onUserUpdate }: DashboardPro
         user={currentUser}
         onLogout={onLogout}
         onOpenSettings={() => setSettingsOpen(true)}
+        onChangeWorkspace={onChangeWorkspace}
       />
 
       <main className="max-w-6xl mx-auto px-4 sm:px-6 py-8 space-y-8">

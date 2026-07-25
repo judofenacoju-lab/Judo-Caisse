@@ -1,10 +1,13 @@
 import { deleteJustificationFiles as deleteFiles } from "./files";
 import { getSupabase } from "./supabase";
+import type { Workspace } from "./workspace";
+import { canAccessWorkspace } from "./workspace";
 
 export type UserRole = "financiere" | "coordon" | "admin";
 export type StaffRole = "financiere" | "coordon";
 export type TransactionType = "entree" | "sortie";
 export type Currency = "USD" | "FC";
+export type { Workspace };
 
 export interface User {
   id: number;
@@ -39,6 +42,7 @@ export interface Session {
   userId: number;
   name: string;
   role: UserRole;
+  workspace: Workspace | null;
 }
 
 export interface PublicUser {
@@ -172,7 +176,21 @@ export async function getUserById(id: number): Promise<User | null> {
 export async function getFreshSession(session: Session): Promise<Session | null> {
   const user = await getUserById(session.userId);
   if (!user) return null;
-  return { userId: user.id, name: user.name, role: user.role };
+
+  let workspace = session.workspace;
+  if (workspace && !canAccessWorkspace(user.role, workspace)) {
+    workspace = null;
+  }
+  if (!workspace && user.role === "coordon") {
+    workspace = "judo_vacances";
+  }
+
+  return {
+    userId: user.id,
+    name: user.name,
+    role: user.role,
+    workspace,
+  };
 }
 
 export async function getStaffUsers(): Promise<PublicUser[]> {
@@ -242,8 +260,15 @@ export async function adminUpdateUserName(
   return { ok: true, user: data as PublicUser };
 }
 
-export async function getCategories(type?: TransactionType): Promise<Category[]> {
-  let query = getSupabase().from("categories").select("*").order("name");
+export async function getCategories(
+  workspace: Workspace,
+  type?: TransactionType
+): Promise<Category[]> {
+  let query = getSupabase()
+    .from("categories")
+    .select("*")
+    .eq("workspace", workspace)
+    .order("name");
   if (type) query = query.eq("type", type);
   const { data, error } = await query;
   if (error || !data) return [];
@@ -251,39 +276,52 @@ export async function getCategories(type?: TransactionType): Promise<Category[]>
 }
 
 export async function getTransactions(filters?: {
+  workspace: Workspace;
   type?: TransactionType;
   limit?: number;
   offset?: number;
 }): Promise<Transaction[]> {
+  if (!filters?.workspace) return [];
+
   let query = getSupabase()
     .from("transactions")
     .select("*, categories(name), users!transactions_created_by_fkey(name, role)")
+    .eq("workspace", filters.workspace)
     .order("date", { ascending: false })
     .order("created_at", { ascending: false });
 
-  if (filters?.type) query = query.eq("type", filters.type);
-  if (filters?.limit) query = query.limit(filters.limit);
-  if (filters?.offset) query = query.range(filters.offset, filters.offset + (filters.limit ?? 50) - 1);
+  if (filters.type) query = query.eq("type", filters.type);
+  if (filters.limit) query = query.limit(filters.limit);
+  if (filters.offset)
+    query = query.range(
+      filters.offset,
+      filters.offset + (filters.limit ?? 50) - 1
+    );
 
   const { data, error } = await query;
   if (error || !data) return [];
   return (data as TxRow[]).map(mapTransaction);
 }
 
-export async function getTransactionCount(type?: TransactionType): Promise<number> {
+export async function getTransactionCount(
+  workspace: Workspace,
+  type?: TransactionType
+): Promise<number> {
   let query = getSupabase()
     .from("transactions")
-    .select("id", { count: "exact", head: true });
+    .select("id", { count: "exact", head: true })
+    .eq("workspace", workspace);
   if (type) query = query.eq("type", type);
   const { count, error } = await query;
   if (error) return 0;
   return count ?? 0;
 }
 
-export async function getStats() {
+export async function getStats(workspace: Workspace) {
   const { data, error } = await getSupabase()
     .from("transactions")
-    .select("type, amount, currency");
+    .select("type, amount, currency")
+    .eq("workspace", workspace);
 
   const txs = (error || !data ? [] : data) as Pick<
     Transaction,
@@ -316,8 +354,20 @@ export async function createTransaction(data: {
   categoryId: number | null;
   createdBy: number;
   date: string;
+  workspace: Workspace;
   justificationFiles?: string[];
 }): Promise<Transaction> {
+  if (data.categoryId) {
+    const { data: category } = await getSupabase()
+      .from("categories")
+      .select("id, workspace")
+      .eq("id", data.categoryId)
+      .maybeSingle();
+    if (!category || category.workspace !== data.workspace) {
+      throw new Error("Catégorie invalide pour ce tableau de bord");
+    }
+  }
+
   const { data: row, error } = await getSupabase()
     .from("transactions")
     .insert({
@@ -329,6 +379,7 @@ export async function createTransaction(data: {
       created_by: data.createdBy,
       date: data.date,
       justification_files: data.justificationFiles ?? [],
+      workspace: data.workspace,
     })
     .select("*, categories(name), users!transactions_created_by_fkey(name, role)")
     .single();
@@ -337,11 +388,15 @@ export async function createTransaction(data: {
   return mapTransaction(row as TxRow);
 }
 
-export async function deleteTransaction(id: number): Promise<Transaction | null> {
+export async function deleteTransaction(
+  id: number,
+  workspace: Workspace
+): Promise<Transaction | null> {
   const { data: existing } = await getSupabase()
     .from("transactions")
     .select("*, categories(name), users!transactions_created_by_fkey(name, role)")
     .eq("id", id)
+    .eq("workspace", workspace)
     .maybeSingle();
 
   if (!existing) return null;
@@ -349,7 +404,11 @@ export async function deleteTransaction(id: number): Promise<Transaction | null>
   const tx = mapTransaction(existing as TxRow);
   await deleteFiles(tx.justification_files ?? []);
 
-  const { error } = await getSupabase().from("transactions").delete().eq("id", id);
+  const { error } = await getSupabase()
+    .from("transactions")
+    .delete()
+    .eq("id", id)
+    .eq("workspace", workspace);
   if (error) return null;
   return tx;
 }
@@ -361,6 +420,7 @@ export async function addAuditLog(entry: {
   actorRole: UserRole;
   details: string;
   metadata?: Record<string, string | number | boolean | null>;
+  workspace?: Workspace | null;
 }): Promise<AuditLog> {
   const { data, error } = await getSupabase()
     .from("audit_logs")
@@ -371,6 +431,7 @@ export async function addAuditLog(entry: {
       actor_role: entry.actorRole,
       details: entry.details,
       metadata: entry.metadata ?? null,
+      workspace: entry.workspace ?? null,
     })
     .select("*")
     .single();
@@ -391,28 +452,39 @@ export async function addAuditLog(entry: {
   return data as AuditLog;
 }
 
-export async function getAuditLogs(limit = 200): Promise<AuditLog[]> {
+export async function getAuditLogs(
+  workspace: Workspace,
+  limit = 200
+): Promise<AuditLog[]> {
   const { data, error } = await getSupabase()
     .from("audit_logs")
     .select("*")
+    .eq("workspace", workspace)
     .order("created_at", { ascending: false })
     .limit(limit);
   if (error || !data) return [];
   return data as AuditLog[];
 }
 
-export async function clearAuditLogs(actor: {
-  id: number;
-  name: string;
-  role: UserRole;
-}): Promise<void> {
-  await getSupabase().from("audit_logs").delete().neq("id", 0);
+export async function clearAuditLogs(
+  actor: {
+    id: number;
+    name: string;
+    role: UserRole;
+  },
+  workspace: Workspace
+): Promise<void> {
+  await getSupabase()
+    .from("audit_logs")
+    .delete()
+    .eq("workspace", workspace);
   await addAuditLog({
     action: "audit_reset",
     actorId: actor.id,
     actorName: actor.name,
     actorRole: actor.role,
     details: "Réinitialisation du journal d'audit",
+    workspace,
   });
 }
 
@@ -445,7 +517,8 @@ export async function updateUserPin(
 
 export async function createCategory(
   name: string,
-  type: TransactionType
+  type: TransactionType,
+  workspace: Workspace
 ): Promise<Category> {
   const trimmed = name.trim();
   if (!trimmed) throw new Error("Nom requis");
@@ -453,6 +526,7 @@ export async function createCategory(
   const { data: existing } = await getSupabase()
     .from("categories")
     .select("id")
+    .eq("workspace", workspace)
     .ilike("name", trimmed)
     .eq("type", type)
     .maybeSingle();
@@ -461,7 +535,7 @@ export async function createCategory(
 
   const { data, error } = await getSupabase()
     .from("categories")
-    .insert({ name: trimmed, type })
+    .insert({ name: trimmed, type, workspace })
     .select("*")
     .single();
 
@@ -471,7 +545,8 @@ export async function createCategory(
 
 export async function updateCategory(
   id: number,
-  name: string
+  name: string,
+  workspace: Workspace
 ): Promise<Category | null> {
   const trimmed = name.trim();
   if (!trimmed) throw new Error("Nom requis");
@@ -480,6 +555,7 @@ export async function updateCategory(
     .from("categories")
     .select("*")
     .eq("id", id)
+    .eq("workspace", workspace)
     .maybeSingle();
 
   if (!current) return null;
@@ -488,6 +564,7 @@ export async function updateCategory(
     .from("categories")
     .select("id")
     .neq("id", id)
+    .eq("workspace", workspace)
     .eq("type", current.type)
     .ilike("name", trimmed)
     .maybeSingle();
@@ -498,6 +575,7 @@ export async function updateCategory(
     .from("categories")
     .update({ name: trimmed })
     .eq("id", id)
+    .eq("workspace", workspace)
     .select("*")
     .single();
 
@@ -506,12 +584,25 @@ export async function updateCategory(
 }
 
 export async function deleteCategory(
-  id: number
+  id: number,
+  workspace: Workspace
 ): Promise<{ ok: true } | { ok: false; error: string }> {
+  const { data: current } = await getSupabase()
+    .from("categories")
+    .select("id")
+    .eq("id", id)
+    .eq("workspace", workspace)
+    .maybeSingle();
+
+  if (!current) {
+    return { ok: false, error: "Catégorie introuvable" };
+  }
+
   const { count } = await getSupabase()
     .from("transactions")
     .select("id", { count: "exact", head: true })
-    .eq("category_id", id);
+    .eq("category_id", id)
+    .eq("workspace", workspace);
 
   if ((count ?? 0) > 0) {
     return {
@@ -520,31 +611,40 @@ export async function deleteCategory(
     };
   }
 
-  const { error } = await getSupabase().from("categories").delete().eq("id", id);
+  const { error } = await getSupabase()
+    .from("categories")
+    .delete()
+    .eq("id", id)
+    .eq("workspace", workspace);
   if (error) return { ok: false, error: error.message };
   return { ok: true };
 }
 
-export async function getAllTransactions(): Promise<Transaction[]> {
-  return getTransactions();
+export async function getAllTransactions(
+  workspace: Workspace
+): Promise<Transaction[]> {
+  return getTransactions({ workspace });
 }
 
-export async function getExportData() {
+export async function getExportData(workspace: Workspace) {
   const [stats, transactions, monthly] = await Promise.all([
-    getStats(),
-    getAllTransactions(),
-    getMonthlyStats(),
+    getStats(workspace),
+    getAllTransactions(workspace),
+    getMonthlyStats(workspace),
   ]);
   return { stats, transactions, monthly };
 }
 
-export async function getRecapData(filters: {
-  mode: "date" | "month" | "year" | "all";
-  date?: string;
-  month?: string;
-  year?: string;
-}) {
-  let txs = await getAllTransactions();
+export async function getRecapData(
+  workspace: Workspace,
+  filters: {
+    mode: "date" | "month" | "year" | "all";
+    date?: string;
+    month?: string;
+    year?: string;
+  }
+) {
+  let txs = await getAllTransactions(workspace);
 
   if (filters.mode === "date" && filters.date) {
     txs = txs.filter((t) => t.date === filters.date);
@@ -612,8 +712,8 @@ export async function getRecapData(filters: {
   };
 }
 
-export async function getMonthlyStats() {
-  const txs = await getAllTransactions();
+export async function getMonthlyStats(workspace: Workspace) {
+  const txs = await getAllTransactions(workspace);
   const byMonth = new Map<string, { usd: CurrencyTotals; fc: CurrencyTotals }>();
 
   for (const tx of txs) {

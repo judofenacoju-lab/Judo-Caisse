@@ -3,7 +3,9 @@
 import dynamic from "next/dynamic";
 import { useCallback, useEffect, useState } from "react";
 import LoginForm from "@/components/LoginForm";
+import WorkspaceModal from "@/components/WorkspaceModal";
 import type { Session } from "@/lib/db";
+import type { Workspace } from "@/lib/workspace";
 
 const Dashboard = dynamic(() => import("@/components/Dashboard"), {
   loading: () => (
@@ -55,17 +57,56 @@ export default function Home() {
     await checkAuth();
   }
 
-  function handleLogout() {
+  async function handleWorkspaceSelect(workspace: Workspace) {
+    const res = await fetch("/api/auth", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ workspace }),
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      throw new Error(data.error ?? "Sélection impossible");
+    }
+    setUser(data.user);
+  }
+
+  async function handleChangeWorkspace() {
+    const res = await fetch("/api/auth", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ clearWorkspace: true }),
+    });
+    if (!res.ok) return;
+    const data = await res.json();
+    setUser(data.user);
+  }
+
+  async function handleLogout() {
+    await fetch("/api/auth", { method: "DELETE" });
     setUser(null);
     setLoginKey((k) => k + 1);
   }
 
-  if (user) {
+  if (user && !user.workspace) {
+    return (
+      <WorkspaceModal
+        onSelect={handleWorkspaceSelect}
+        onLogout={handleLogout}
+      />
+    );
+  }
+
+  if (user?.workspace) {
     return (
       <Dashboard
         user={user}
         onLogout={handleLogout}
         onUserUpdate={setUser}
+        onChangeWorkspace={
+          user.role === "admin" || user.role === "financiere"
+            ? handleChangeWorkspace
+            : undefined
+        }
       />
     );
   }
