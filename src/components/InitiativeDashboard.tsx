@@ -29,6 +29,7 @@ interface InitiativeDashboardProps {
   onOpenSettings: () => void;
   onChangeWorkspace?: () => void;
   onOpenRecap?: () => void;
+  onOpenAudit?: () => void;
   onDelete: () => void;
   onNewOperation?: () => void;
 }
@@ -44,6 +45,7 @@ export default function InitiativeDashboard({
   onOpenSettings,
   onChangeWorkspace,
   onOpenRecap,
+  onOpenAudit,
   onDelete,
   onNewOperation,
 }: InitiativeDashboardProps) {
@@ -167,15 +169,35 @@ export default function InitiativeDashboard({
                   />
                 </div>
               )}
-              {onOpenRecap && (
-                <button
-                  type="button"
-                  onClick={onOpenRecap}
-                  className="mt-6 w-full py-3 text-sm font-semibold text-red-950 border border-red-900/15 hover:bg-red-900/5 transition-colors"
-                  style={{ clipPath: "polygon(0 0, 100% 0, 100% 70%, 92% 100%, 0 100%)" }}
-                >
-                  Récapitulatif
-                </button>
+              {(onOpenRecap || onOpenAudit) && (
+                <div className="mt-6 space-y-2">
+                  {onOpenRecap && (
+                    <button
+                      type="button"
+                      onClick={onOpenRecap}
+                      className="w-full py-3 text-sm font-semibold text-red-950 border border-red-900/15 hover:bg-red-900/5 transition-colors"
+                      style={{
+                        clipPath:
+                          "polygon(0 0, 100% 0, 100% 70%, 92% 100%, 0 100%)",
+                      }}
+                    >
+                      Récapitulatif
+                    </button>
+                  )}
+                  {onOpenAudit && (
+                    <button
+                      type="button"
+                      onClick={onOpenAudit}
+                      className="w-full py-3 text-sm font-semibold text-red-950 border border-red-900/15 hover:bg-red-900/5 transition-colors"
+                      style={{
+                        clipPath:
+                          "polygon(0 0, 100% 0, 100% 70%, 92% 100%, 0 100%)",
+                      }}
+                    >
+                      Journal d&apos;Audit
+                    </button>
+                  )}
+                </div>
               )}
             </div>
           </aside>
@@ -194,14 +216,27 @@ export default function InitiativeDashboard({
                   <p className="mt-2 text-xl font-bold text-white">
                     {formatCurrency(stats.fc.solde, "FC")}
                   </p>
-                  {onOpenRecap && (
-                    <button
-                      type="button"
-                      onClick={onOpenRecap}
-                      className="lg:hidden mt-5 inline-flex px-4 py-2 text-sm font-semibold bg-white/15 hover:bg-white/25 transition-colors"
-                    >
-                      Récapitulatif
-                    </button>
+                  {(onOpenRecap || onOpenAudit) && (
+                    <div className="lg:hidden mt-5 flex flex-wrap gap-2">
+                      {onOpenRecap && (
+                        <button
+                          type="button"
+                          onClick={onOpenRecap}
+                          className="inline-flex px-4 py-2 text-sm font-semibold bg-white/15 hover:bg-white/25 transition-colors text-white"
+                        >
+                          Récapitulatif
+                        </button>
+                      )}
+                      {onOpenAudit && (
+                        <button
+                          type="button"
+                          onClick={onOpenAudit}
+                          className="inline-flex px-4 py-2 text-sm font-semibold bg-white/15 hover:bg-white/25 transition-colors text-white"
+                        >
+                          Journal d&apos;Audit
+                        </button>
+                      )}
+                    </div>
                   )}
                 </div>
                 <div className="initiative-hero-cut" aria-hidden />

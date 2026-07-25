@@ -8,6 +8,7 @@ import StatsCards from "@/components/StatsCards";
 import TransactionForm from "@/components/TransactionForm";
 import TransactionList from "@/components/TransactionList";
 import AuditLogPanel from "@/components/AuditLogPanel";
+import AuditLogModal from "@/components/AuditLogModal";
 import RecapModal from "@/components/RecapModal";
 import type { CurrencyTotals, Session, Transaction } from "@/lib/db";
 import { canCreateTransactions } from "@/lib/utils";
@@ -39,6 +40,7 @@ export default function Dashboard({
   const [loading, setLoading] = useState(true);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [recapOpen, setRecapOpen] = useState(false);
+  const [auditOpen, setAuditOpen] = useState(false);
   const [formOpen, setFormOpen] = useState(false);
   const isMounted = useRef(true);
 
@@ -134,15 +136,12 @@ export default function Dashboard({
           onOpenRecap={
             currentUser.role === "admin" ? () => setRecapOpen(true) : undefined
           }
+          onOpenAudit={
+            currentUser.role === "admin" ? () => setAuditOpen(true) : undefined
+          }
           onDelete={() => refresh(true)}
           onNewOperation={!isReadOnly ? () => setFormOpen(true) : undefined}
         />
-
-        {currentUser.role === "admin" && (
-          <div className="theme-initiative max-w-6xl mx-auto px-4 sm:px-6 pb-24 -mt-4">
-            <AuditLogPanel />
-          </div>
-        )}
 
         {!isReadOnly && (
           <div className={formOpen ? "theme-initiative" : undefined}>
@@ -160,7 +159,10 @@ export default function Dashboard({
         )}
 
         {currentUser.role === "admin" && (
-          <RecapModal open={recapOpen} onClose={() => setRecapOpen(false)} />
+          <>
+            <RecapModal open={recapOpen} onClose={() => setRecapOpen(false)} />
+            <AuditLogModal open={auditOpen} onClose={() => setAuditOpen(false)} />
+          </>
         )}
 
         <SettingsPanel
