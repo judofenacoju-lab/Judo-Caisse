@@ -8,6 +8,9 @@ import type { Category, Currency, TransactionType } from "@/lib/db";
 interface TransactionFormProps {
   onSuccess: () => void;
   elegant?: boolean;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+  hideFab?: boolean;
 }
 
 interface JustificationItem {
@@ -18,8 +21,19 @@ interface JustificationItem {
 export default function TransactionForm({
   onSuccess,
   elegant = false,
+  open: controlledOpen,
+  onOpenChange,
+  hideFab = false,
 }: TransactionFormProps) {
-  const [open, setOpen] = useState(false);
+  const [uncontrolledOpen, setUncontrolledOpen] = useState(false);
+  const open = controlledOpen ?? uncontrolledOpen;
+
+  function setOpen(next: boolean) {
+    onOpenChange?.(next);
+    if (controlledOpen === undefined) {
+      setUncontrolledOpen(next);
+    }
+  }
   const [type, setType] = useState<TransactionType>("entree");
   const [amount, setAmount] = useState("");
   const [currency, setCurrency] = useState<Currency>("USD");
@@ -127,12 +141,13 @@ export default function TransactionForm({
   }
 
   if (!open) {
+    if (hideFab) return null;
     return (
       <button
         onClick={() => setOpen(true)}
         className={`fixed bottom-6 right-6 z-40 flex items-center gap-2 px-6 py-4 text-white font-semibold transition-all hover:scale-105 ${
           elegant
-            ? "rounded-2xl bg-primary shadow-[0_18px_36px_-16px_rgba(15,92,86,0.85)] hover:bg-primary-light"
+            ? "initiative-fab"
             : "rounded-full bg-primary shadow-lg hover:bg-primary-light"
         }`}
       >

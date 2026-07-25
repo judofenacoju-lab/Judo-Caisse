@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import Header from "@/components/Header";
+import InitiativeDashboard from "@/components/InitiativeDashboard";
 import SettingsPanel from "@/components/SettingsPanel";
 import StatsCards from "@/components/StatsCards";
 import TransactionForm from "@/components/TransactionForm";
@@ -38,6 +39,7 @@ export default function Dashboard({
   const [loading, setLoading] = useState(true);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [recapOpen, setRecapOpen] = useState(false);
+  const [formOpen, setFormOpen] = useState(false);
   const isMounted = useRef(true);
 
   useEffect(() => {
@@ -101,13 +103,13 @@ export default function Dashboard({
   }, [refresh, user.workspace]);
 
   const isReadOnly = !canCreateTransactions(currentUser.role);
-  const elegant = currentUser.workspace === "initiative_judo";
+  const isInitiative = currentUser.workspace === "initiative_judo";
 
   if (loading) {
     return (
       <div
         className={`min-h-screen flex items-center justify-center ${
-          elegant ? "theme-initiative" : ""
+          isInitiative ? "theme-initiative" : ""
         }`}
       >
         <div className="text-center">
@@ -118,8 +120,60 @@ export default function Dashboard({
     );
   }
 
+  if (isInitiative) {
+    return (
+      <>
+        <InitiativeDashboard
+          user={currentUser}
+          stats={stats}
+          transactions={transactions}
+          canDelete={!isReadOnly}
+          onLogout={onLogout}
+          onOpenSettings={() => setSettingsOpen(true)}
+          onChangeWorkspace={onChangeWorkspace}
+          onOpenRecap={
+            currentUser.role === "admin" ? () => setRecapOpen(true) : undefined
+          }
+          onDelete={() => refresh(true)}
+          onNewOperation={!isReadOnly ? () => setFormOpen(true) : undefined}
+        />
+
+        {currentUser.role === "admin" && (
+          <div className="theme-initiative max-w-6xl mx-auto px-4 sm:px-6 pb-24 -mt-4">
+            <AuditLogPanel />
+          </div>
+        )}
+
+        {!isReadOnly && (
+          <div className={formOpen ? "theme-initiative" : undefined}>
+            <TransactionForm
+              onSuccess={() => {
+                refresh(true);
+                setFormOpen(false);
+              }}
+              elegant
+              open={formOpen}
+              onOpenChange={setFormOpen}
+              hideFab
+            />
+          </div>
+        )}
+
+        {currentUser.role === "admin" && (
+          <RecapModal open={recapOpen} onClose={() => setRecapOpen(false)} />
+        )}
+
+        <SettingsPanel
+          user={currentUser}
+          open={settingsOpen}
+          onClose={() => setSettingsOpen(false)}
+        />
+      </>
+    );
+  }
+
   return (
-    <div className={`min-h-screen ${elegant ? "theme-initiative" : "bg-background"}`}>
+    <div className="min-h-screen bg-background">
       <Header
         user={currentUser}
         onLogout={onLogout}
@@ -133,7 +187,6 @@ export default function Dashboard({
             usd={stats.usd}
             fc={stats.fc}
             transactionCount={stats.transactionCount}
-            elegant={elegant}
             onOpenRecap={
               currentUser.role === "admin" ? () => setRecapOpen(true) : undefined
             }
@@ -146,13 +199,10 @@ export default function Dashboard({
           transactions={transactions}
           onDelete={() => refresh(true)}
           canDelete={!isReadOnly}
-          elegant={elegant}
         />
       </main>
 
-      {!isReadOnly && (
-        <TransactionForm onSuccess={() => refresh(true)} elegant={elegant} />
-      )}
+      {!isReadOnly && <TransactionForm onSuccess={() => refresh(true)} />}
 
       {currentUser.role === "admin" && (
         <RecapModal open={recapOpen} onClose={() => setRecapOpen(false)} />
