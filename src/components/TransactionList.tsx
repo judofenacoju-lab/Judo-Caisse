@@ -17,6 +17,7 @@ interface TransactionListProps {
   transactions: Transaction[];
   onDelete: () => void;
   canDelete?: boolean;
+  elegant?: boolean;
 }
 
 const PAGE_SIZE = 6;
@@ -25,6 +26,7 @@ export default function TransactionList({
   transactions,
   onDelete,
   canDelete = true,
+  elegant = false,
 }: TransactionListProps) {
   const [filter, setFilter] = useState<TransactionType | "all">("all");
   const [page, setPage] = useState(1);
@@ -54,10 +56,22 @@ export default function TransactionList({
   }
 
   return (
-    <div className="bg-card rounded-2xl border border-border shadow-sm overflow-hidden">
-      <div className="p-6 border-b border-border">
+    <div
+      className={`overflow-hidden ${
+        elegant
+          ? "initiative-panel initiative-rise-delay rounded-[1.4rem]"
+          : "bg-card rounded-2xl border border-border shadow-sm"
+      }`}
+    >
+      <div className={`p-6 border-b ${elegant ? "border-teal-900/10" : "border-border"}`}>
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <h2 className="text-lg font-bold">Historique des opérations</h2>
+          <h2
+            className={`text-lg font-bold ${
+              elegant ? "tracking-tight" : ""
+            }`}
+          >
+            Historique des opérations
+          </h2>
           <div className="flex gap-2">
             {(["all", "entree", "sortie"] as const).map((f) => (
               <button
@@ -65,8 +79,12 @@ export default function TransactionList({
                 onClick={() => setFilter(f)}
                 className={`px-3 py-1.5 text-sm font-medium rounded-lg transition-colors ${
                   filter === f
-                    ? "bg-primary text-white"
-                    : "bg-slate-100 text-muted hover:bg-slate-200"
+                    ? elegant
+                      ? "bg-primary text-white shadow-sm"
+                      : "bg-primary text-white"
+                    : elegant
+                      ? "bg-white/70 text-muted hover:bg-white"
+                      : "bg-slate-100 text-muted hover:bg-slate-200"
                 }`}
               >
                 {f === "all" ? "Tout" : f === "entree" ? "Entrées" : "Sorties"}

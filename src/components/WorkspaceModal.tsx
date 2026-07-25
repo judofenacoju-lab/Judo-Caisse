@@ -35,7 +35,7 @@ export default function WorkspaceModal({
           <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-white/10 backdrop-blur mb-4">
             <LayoutDashboard className="w-8 h-8 text-white" />
           </div>
-          <h1 className="text-2xl font-bold text-white">Choisir un tableau de bord</h1>
+          <h1 className="text-2xl font-bold text-white">Choisir la Caisse</h1>
           <p className="text-slate-300 mt-2">
             Sélectionnez l&apos;espace de caisse à ouvrir
           </p>

@@ -7,6 +7,7 @@ import type { Category, Currency, TransactionType } from "@/lib/db";
 
 interface TransactionFormProps {
   onSuccess: () => void;
+  elegant?: boolean;
 }
 
 interface JustificationItem {
@@ -14,7 +15,10 @@ interface JustificationItem {
   file: File;
 }
 
-export default function TransactionForm({ onSuccess }: TransactionFormProps) {
+export default function TransactionForm({
+  onSuccess,
+  elegant = false,
+}: TransactionFormProps) {
   const [open, setOpen] = useState(false);
   const [type, setType] = useState<TransactionType>("entree");
   const [amount, setAmount] = useState("");
@@ -126,7 +130,11 @@ export default function TransactionForm({ onSuccess }: TransactionFormProps) {
     return (
       <button
         onClick={() => setOpen(true)}
-        className="fixed bottom-6 right-6 z-40 flex items-center gap-2 px-6 py-4 bg-primary text-white font-semibold rounded-full shadow-lg hover:bg-primary-light transition-all hover:scale-105"
+        className={`fixed bottom-6 right-6 z-40 flex items-center gap-2 px-6 py-4 text-white font-semibold transition-all hover:scale-105 ${
+          elegant
+            ? "rounded-2xl bg-primary shadow-[0_18px_36px_-16px_rgba(15,92,86,0.85)] hover:bg-primary-light"
+            : "rounded-full bg-primary shadow-lg hover:bg-primary-light"
+        }`}
       >
         <Plus className="w-5 h-5" />
         Nouvelle opération
@@ -137,7 +145,11 @@ export default function TransactionForm({ onSuccess }: TransactionFormProps) {
   return (
     <>
       <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-        <div className="bg-card w-full max-w-lg rounded-2xl shadow-2xl animate-fade-in max-h-[90vh] overflow-y-auto">
+        <div
+          className={`bg-card w-full max-w-lg shadow-2xl animate-fade-in max-h-[90vh] overflow-y-auto ${
+            elegant ? "rounded-[1.4rem] border border-teal-900/10" : "rounded-2xl"
+          }`}
+        >
           <div className="flex items-center justify-between p-6 border-b border-border">
             <h2 className="text-xl font-bold">Nouvelle opération</h2>
             <button

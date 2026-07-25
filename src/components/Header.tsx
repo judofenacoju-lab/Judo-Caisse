@@ -12,7 +12,10 @@ interface HeaderProps {
   onChangeWorkspace?: () => void;
 }
 
-function headerStyles(role: UserRole): string {
+function headerStyles(role: UserRole, elegant: boolean): string {
+  if (elegant) {
+    return "bg-[linear-gradient(120deg,#0b3f3b_0%,#0f5c56_55%,#14665f_100%)] text-white border-transparent shadow-[0_12px_30px_-18px_rgba(11,63,59,0.7)]";
+  }
   if (role === "financiere") {
     return "bg-gradient-to-br from-primary to-primary-light text-white border-transparent";
   }
@@ -33,26 +36,36 @@ export default function Header({
     onLogout();
   }
 
+  const elegant = user.workspace === "initiative_judo";
   const isColored =
+    elegant ||
     user.role === "financiere" ||
     user.role === "coordon" ||
     user.role === "admin";
 
   return (
-    <header className={`sticky top-0 z-30 border-b ${headerStyles(user.role)}`}>
+    <header className={`sticky top-0 z-30 border-b ${headerStyles(user.role, elegant)}`}>
       <div className="max-w-6xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between">
         <div className="flex items-center gap-3 min-w-0">
           <span className="text-2xl flex-shrink-0">🥋</span>
           <div className="min-w-0">
-            <h1 className="text-xl font-bold truncate">Judo Caisse</h1>
+            <h1
+              className={`text-xl font-bold truncate ${
+                elegant ? "tracking-tight" : ""
+              }`}
+            >
+              {elegant ? "Initiative-Judo" : "Judo Caisse"}
+            </h1>
             <p
               className={`text-xs truncate ${
                 isColored ? "text-white/80" : "text-muted"
               }`}
             >
-              {user.workspace
-                ? workspaceLabel(user.workspace)
-                : "Gestion quotidienne de la caisse"}
+              {elegant
+                ? "Caisse élégante · Admin & Financière"
+                : user.workspace
+                  ? workspaceLabel(user.workspace)
+                  : "Gestion quotidienne de la caisse"}
             </p>
           </div>
         </div>
@@ -72,7 +85,7 @@ export default function Header({
                   ? "text-white/90 hover:bg-white/15"
                   : "text-muted hover:text-primary hover:bg-blue-50"
               }`}
-              title="Changer de tableau de bord"
+              title="Changer de caisse"
             >
               <LayoutDashboard className="w-5 h-5" />
             </button>

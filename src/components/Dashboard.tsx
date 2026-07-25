@@ -101,10 +101,15 @@ export default function Dashboard({
   }, [refresh, user.workspace]);
 
   const isReadOnly = !canCreateTransactions(currentUser.role);
+  const elegant = currentUser.workspace === "initiative_judo";
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div
+        className={`min-h-screen flex items-center justify-center ${
+          elegant ? "theme-initiative" : ""
+        }`}
+      >
         <div className="text-center">
           <span className="text-4xl animate-pulse">🥋</span>
           <p className="text-muted mt-4">Chargement...</p>
@@ -114,7 +119,7 @@ export default function Dashboard({
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className={`min-h-screen ${elegant ? "theme-initiative" : "bg-background"}`}>
       <Header
         user={currentUser}
         onLogout={onLogout}
@@ -128,6 +133,7 @@ export default function Dashboard({
             usd={stats.usd}
             fc={stats.fc}
             transactionCount={stats.transactionCount}
+            elegant={elegant}
             onOpenRecap={
               currentUser.role === "admin" ? () => setRecapOpen(true) : undefined
             }
@@ -140,10 +146,13 @@ export default function Dashboard({
           transactions={transactions}
           onDelete={() => refresh(true)}
           canDelete={!isReadOnly}
+          elegant={elegant}
         />
       </main>
 
-      {!isReadOnly && <TransactionForm onSuccess={() => refresh(true)} />}
+      {!isReadOnly && (
+        <TransactionForm onSuccess={() => refresh(true)} elegant={elegant} />
+      )}
 
       {currentUser.role === "admin" && (
         <RecapModal open={recapOpen} onClose={() => setRecapOpen(false)} />

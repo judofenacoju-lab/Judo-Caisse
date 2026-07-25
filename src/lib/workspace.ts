@@ -10,12 +10,12 @@ export const WORKSPACE_OPTIONS: {
   {
     id: "judo_vacances",
     label: "Judo-Vacances",
-    description: "Caisse partagée Financière et Coordon",
+    description: "La Gestion du Judo-Vacances",
   },
   {
     id: "initiative_judo",
-    label: "Initiative Judo",
-    description: "Caisse réservée à l'Admin et à la Financière",
+    label: "Initiative-Judo",
+    description: "La Gestion de l'Initiative-Judo",
   },
 ];
 
